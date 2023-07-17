@@ -252,7 +252,13 @@ fn process(txt []string) &CTX {
 		if l.starts_with("Okay, how much money should Person ") {
 			o := l.after("Okay, how much money should Person ").before(" have?").int()
 			ctx.personereq << o
-			ctx.code << "${ctx.ind}scanf('%' SCNu8, &person_${o});"
+			ctx.code << "${ctx.ind}scanf(\"%hhu\", &person_${o});"
+			continue
+		}
+
+		if l.starts_with("Okay, that will be ") {
+			c := get_price(l.after("Okay, that will be ").before("."), mut ctx)
+			ctx.code << "${ctx.ind}return ${c};"
 			continue
 		}
 
@@ -373,6 +379,8 @@ fn extend_ctx(mut ctx &CTX, by &CTX) {
 		ctx.code << by.code
 		ctx.code << t
 		ctx.r_name = by.r_name
+		ctx.r_currency = by.r_currency
+		ctx.ind = by.ind
 	}
 	else {
 		ctx.code << by.code
@@ -509,7 +517,7 @@ fn main() {
 		os.create(ofile) or {  }
 	}
 
-	mut out := ["#include <stdio.h>", "#include <stdint.h>", "", "#ifndef SCNu8", "   #define SCNu8 \"hhu\"", "#endif", ""]
+	mut out := ["#include <stdio.h>", "#include <stdint.h>", ""]
 	out << "// restaurant: ${ctx.r_name}:"
 	out << ""
 
